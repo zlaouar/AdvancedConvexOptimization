@@ -29,7 +29,7 @@ end
 
 function implicit2explicit(Bx::Function, N)
     mat = diagm(N,N,ones(N))
-    B = zeros(N,N)
+    B = Array{eltype(Bx(ones(N)))}(undef, N, N)
     for i in 1:N
         B[:,i] = Bx(mat[:,i])
     end
@@ -40,3 +40,32 @@ function Bx(x)
     mat = diagm(N,N,ones(N))
     return mat*x
 end
+
+function adjB(h,z)
+    ĥ = conj(h)
+    return ĥ .* z
+end
+
+function β(x)
+    N = length(x)
+    h = [hfunc(j) for j in 1:5]
+    ĥ = [fft(h); zeros(N-length(h))]
+    Fx = fft(x)
+    H = ĥ .* Fx
+    return ifft(H)
+end
+
+function adjβ(x)
+    N = length(x)
+    h = [hfunc(j) for j in 1:5]
+    ĥ = [fft(h); zeros(N-length(h))]
+    adjB = fft(x)
+    adjB = conj(ĥ) .* adjB
+    return ifft(adjB)
+end
+
+function testAdjoint(β,β_,N)
+    # check if β_ is adjoint of β
+    implicit2explicit(β_, N)
+end
+
